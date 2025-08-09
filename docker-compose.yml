@@ -28,6 +28,14 @@ services:
     depends_on:
       - postgres
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - ed-platform
+
   ed-database-management:
     build:
       context: ../ed-database-management  # adjust as needed
@@ -37,6 +45,7 @@ services:
     container_name: ed-database-management
     depends_on:
       - postgres
+      - redis
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -51,24 +60,45 @@ services:
       db_port: ${POSTGRES_PORT}
       debug: ${DEBUG}
       DEBUG: ${DEBUG}
+      ENVIRONMENT: ${ENVIRONMENT}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_REFRESH_SECRET_KEY: ${JWT_REFRESH_SECRET_KEY}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES}
+      JWT_REFRESH_EXPIRATION_MINUTES: ${JWT_REFRESH_EXPIRATION_MINUTES}
+      FIREBASE_CONFIG: ${FIREBASE_CONFIG}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      DEBUG_PUBSUB_PRINT: "true"
+      # Uncomment these if using RS256
+      # JWT_PUBLIC_KEY_PATH: ${JWT_PUBLIC_KEY_PATH}
+      # JWT_PRIVATE_KEY_PATH: ${JWT_PRIVATE_KEY_PATH}
     ports:
       - "5002:5002"
     volumes:
     - ../ed-database-management:/app
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5002"]
+    command: [
+      "uvicorn",
+      "app.main:app",
+      "--host", "0.0.0.0",
+      "--port", "5002",
+      "--reload",
+      "--reload-dir", "/app"
+    ]
     networks:
       - ed-platform
 
 
   ed-user-management:
     build:
-      context: ../ed-user-management  # update if your path is different
+      context: ../ed-user-management
       dockerfile: Dockerfile
       args:
         PLATFORM_COMMON_TOKEN: ${PLATFORM_COMMON_TOKEN}
     container_name: ed-user-management
     depends_on:
-      - ed-database-management  # or postgres, depending on dependencies
+      - ed-database-management
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -83,13 +113,93 @@ services:
       db_port: ${POSTGRES_PORT}
       debug: ${DEBUG}
       DEBUG: ${DEBUG}
+      ENVIRONMENT: ${ENVIRONMENT}
+      FIREBASE_CONFIG: ${FIREBASE_CONFIG}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_REFRESH_SECRET_KEY: ${JWT_REFRESH_SECRET_KEY}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES}
+      JWT_REFRESH_EXPIRATION_MINUTES: ${JWT_REFRESH_EXPIRATION_MINUTES}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
     ports:
       - "5003:5003"
     volumes:
-      - ../ed-user-management:/app  # Mount local code into container
+      - ../ed-user-management:/app
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5003", "--reload"]
     networks:
       - ed-platform
+
+  ed-notification-management:
+    build:
+      context: ../ed-notification-management
+      dockerfile: Dockerfile
+      args:
+        PLATFORM_COMMON_TOKEN: ${PLATFORM_COMMON_TOKEN}
+    container_name: ed-notification-management
+    depends_on:
+      - ed-database-management
+    environment:
+      # Database settings (reuse your existing vars)
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      db_user: ${POSTGRES_USER}
+      db_password: ${POSTGRES_PASSWORD}
+      db_host: ${POSTGRES_HOST}
+      db_name: ${POSTGRES_DB}
+      db_port: ${POSTGRES_PORT}
+      debug: ${DEBUG}
+      DEBUG: ${DEBUG}
+      # New SendGrid key for notifications
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      ENVIRONMENT: ${ENVIRONMENT}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_REFRESH_SECRET_KEY: ${JWT_REFRESH_SECRET_KEY}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES}
+      JWT_REFRESH_EXPIRATION_MINUTES: ${JWT_REFRESH_EXPIRATION_MINUTES}
+      FIREBASE_CONFIG: ${FIREBASE_CONFIG}
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY}
+      MAILGUN_SENDING_API_KEY: ${MAILGUN_SENDING_API_KEY}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN}
+      # Uncomment these if using RS256
+      # JWT_PUBLIC_KEY_PATH: ${JWT_PUBLIC_KEY_PATH}
+      # JWT_PRIVATE_KEY_PATH: ${JWT_PRIVATE_KEY_PATH}
+
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+    ports:
+      - "5004:5004"
+    volumes:
+      - ../ed-notification-management:/app
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5004", "--reload"]
+    networks:
+      - ed-platform
+
+  # ed-frontend:
+  #   build:
+  #     context: ../ed-frontend
+  #     dockerfile: Dockerfile.dev
+  #   container_name: ed-frontend
+  #   ports:
+  #     - "5173:5173" # Vite dev server
+  #   volumes:
+  #     - type: bind
+  #       source: ../ed-frontend
+  #       target: /app
+  #     - type: volume
+  #       source: node_modules
+  #       target: /app/node_modules
+  #   environment:
+  #     - CHOKIDAR_USEPOLLING=true
+  #   networks:
+  #     - ed-platform
+
 
 
 
@@ -101,3 +211,4 @@ networks:
 
 volumes:
   pgdata:
+  node_modules:
