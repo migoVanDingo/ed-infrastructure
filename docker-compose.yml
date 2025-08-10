@@ -89,6 +89,59 @@ services:
     networks:
       - ed-platform
 
+  ed-graphql:
+    build:
+      context: ../ed-graphql  # adjust as needed
+      dockerfile: Dockerfile
+      args:
+        PLATFORM_COMMON_TOKEN: ${PLATFORM_COMMON_TOKEN}
+    container_name: ed-graphql
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_SCHEME: ${POSTGRES_SCHEME}
+      db_user: ${POSTGRES_USER}
+      db_password: ${POSTGRES_PASSWORD}
+      db_host: ${POSTGRES_HOST}
+      db_name: ${POSTGRES_DB}
+      db_port: ${POSTGRES_PORT}
+      debug: ${DEBUG}
+      DEBUG: ${DEBUG}
+      ENVIRONMENT: ${ENVIRONMENT}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_REFRESH_SECRET_KEY: ${JWT_REFRESH_SECRET_KEY}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES}
+      JWT_REFRESH_EXPIRATION_MINUTES: ${JWT_REFRESH_EXPIRATION_MINUTES}
+      FIREBASE_CONFIG: ${FIREBASE_CONFIG}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      DEBUG_PUBSUB_PRINT: "true"
+      # Uncomment these if using RS256
+      # JWT_PUBLIC_KEY_PATH: ${JWT_PUBLIC_KEY_PATH}
+      # JWT_PRIVATE_KEY_PATH: ${JWT_PRIVATE_KEY_PATH}
+    ports:
+      - "5005:5005"
+    volumes:
+    - ../ed-graphql:/app
+    command: [
+      "uvicorn",
+      "app.main:app",
+      "--host", "0.0.0.0",
+      "--port", "5005",
+      "--reload",
+      "--reload-dir", "/app"
+    ]
+    networks:
+      - ed-platform
+
 
   ed-user-management:
     build:
