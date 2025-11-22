@@ -47,6 +47,8 @@ services:
       - postgres
       - redis
     environment:
+      GCP_PROJECT_ID: ed-platform-63a01
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/ed-analysis-worker-key.json
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
@@ -100,6 +102,8 @@ services:
       - postgres
       - redis
     environment:
+      GCP_PROJECT_ID: ed-platform-63a01
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/ed-analysis-worker-key.json
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
@@ -153,6 +157,8 @@ services:
     depends_on:
       - ed-database-management
     environment:
+      GCP_PROJECT_ID: ed-platform-63a01
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/ed-analysis-worker-key.json
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
@@ -194,6 +200,8 @@ services:
     depends_on:
       - ed-database-management
     environment:
+      GCP_PROJECT_ID: ed-platform-63a01
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/ed-analysis-worker-key.json
       # Database settings (reuse your existing vars)
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -246,6 +254,7 @@ services:
       - postgres
       - redis
     environment:
+      GCP_PROJECT_ID: ed-platform-63a01
       # DB (same shape you already use)
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -283,6 +292,110 @@ services:
       "app.main:app",
       "--host", "0.0.0.0",
       "--port", "5006",
+      "--reload",
+      "--reload-dir", "/app"
+    ]
+    networks:
+      - ed-platform
+
+  ed-datastore-management:
+    build:
+      context: ../ed-datastore-management
+      dockerfile: Dockerfile
+      args:
+        PLATFORM_COMMON_TOKEN: ${PLATFORM_COMMON_TOKEN}
+    container_name: ed-datastore-management
+    depends_on:
+      - postgres
+      - redis
+      - ed-database-management
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_SCHEME: ${POSTGRES_SCHEME}
+      db_user: ${POSTGRES_USER}
+      db_password: ${POSTGRES_PASSWORD}
+      db_host: ${POSTGRES_HOST}
+      db_name: ${POSTGRES_DB}
+      db_port: ${POSTGRES_PORT}
+      ENVIRONMENT: ${ENVIRONMENT}
+      DEBUG: ${DEBUG}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+    ports:
+      - "5007:5007"
+    volumes:
+      - ../ed-datastore-management:/app
+    command: [
+      "uvicorn",
+      "app.main:app",
+      "--host", "0.0.0.0",
+      "--port", "5007",
+      "--reload",
+      "--reload-dir", "/app"
+    ]
+    networks:
+      - ed-platform
+
+  ed-video-processing-service:
+    build:
+      context: ../ed-video-processing-service
+      dockerfile: Dockerfile
+      args:
+        PLATFORM_COMMON_TOKEN: ${PLATFORM_COMMON_TOKEN}
+    container_name: ed-video-processing-service
+    depends_on:
+      - redis
+    environment:
+      # Basic app env
+      ENVIRONMENT: ${ENVIRONMENT}
+      DEBUG: ${DEBUG}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_SCHEME: ${POSTGRES_SCHEME}
+      db_user: ${POSTGRES_USER}
+      db_password: ${POSTGRES_PASSWORD}
+      db_host: ${POSTGRES_HOST}
+      db_name: ${POSTGRES_DB}
+      db_port: ${POSTGRES_PORT}
+      # GCS config (mirror ed-upload-manager)
+      RAW_BUCKET: ${RAW_BUCKET}                         # e.g. ed-platform-raw
+      STAGED_BUCKET: ${STAGED_BUCKET}                   # e.g. ed-platform-staged
+      CURATED_BUCKET: ${CURATED_BUCKET}                 # e.g. ed-platform-curated
+      GOOGLE_CLOUD_PROJECT_ID: ${GOOGLE_CLOUD_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/gcp-credentials.json
+      GOOGLE_CLOUD_STORAGE_LOCATION: ${GOOGLE_CLOUD_STORAGE_LOCATION} # e.g. us-east1
+      VIDEO_PROCESSING_SUBSCRIPTION_ID: ${VIDEO_PROCESSING_SUBSCRIPTION_ID}
+
+      # Redis / pubsub bridge (if you use it for job queueing)
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      DEBUG_PUBSUB_PRINT: "true"
+
+      # (Optionally add DB creds later if this service writes directly to Postgres)
+      # POSTGRES_USER: ${POSTGRES_USER}
+      # POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # POSTGRES_DB: ${POSTGRES_DB}
+      # POSTGRES_HOST: ${POSTGRES_HOST}
+      # POSTGRES_PORT: ${POSTGRES_PORT}
+      # POSTGRES_SCHEME: ${POSTGRES_SCHEME}
+
+    ports:
+      - "5008:5008"
+    volumes:
+      - ../ed-video-processing-service:/app
+      - ./secrets/gcp-credentials.json:/secrets/gcp-credentials.json:ro
+    command: [
+      "uvicorn",
+      "app.main:app",
+      "--host", "0.0.0.0",
+      "--port", "5008",
       "--reload",
       "--reload-dir", "/app"
     ]
