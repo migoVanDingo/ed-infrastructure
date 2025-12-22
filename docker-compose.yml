@@ -340,6 +340,48 @@ services:
     networks:
       - ed-platform
 
+  ed-project-management:
+    build:
+      context: ../ed-project-management
+      dockerfile: Dockerfile
+      args:
+        PLATFORM_COMMON_TOKEN: ${PLATFORM_COMMON_TOKEN}
+    container_name: ed-project-management
+    depends_on:
+      - postgres
+      - redis
+      - ed-database-management
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_SCHEME: ${POSTGRES_SCHEME}
+      db_user: ${POSTGRES_USER}
+      db_password: ${POSTGRES_PASSWORD}
+      db_host: ${POSTGRES_HOST}
+      db_name: ${POSTGRES_DB}
+      db_port: ${POSTGRES_PORT}
+      ENVIRONMENT: ${ENVIRONMENT}
+      DEBUG: ${DEBUG}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+    ports:
+      - "5009:5009"
+    volumes:
+      - ../ed-project-management:/app
+    command: [
+      "uvicorn",
+      "app.main:app",
+      "--host", "0.0.0.0",
+      "--port", "5009",
+      "--reload",
+      "--reload-dir", "/app"
+    ]
+    networks:
+      - ed-platform
+
   ed-video-processing-service:
     build:
       context: ../ed-video-processing-service
