@@ -135,6 +135,7 @@ services:
       - "5005:5005"
     volumes:
     - ../ed-graphql:/app
+    - ./ed-analysis-worker-key.json:/secrets/ed-analysis-worker-key.json:ro
     command: [
       "uvicorn",
       "app.main:app",
