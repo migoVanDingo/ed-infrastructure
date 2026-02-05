@@ -383,54 +383,54 @@ services:
     networks:
       - ed-platform
 
-  ed-labeler-service:
-    build:
-      context: ../ed-labeler-service
-      dockerfile: Dockerfile
-      args:
-        PLATFORM_COMMON_TOKEN: ${PLATFORM_COMMON_TOKEN}
-    container_name: ed-labeler-service
-    depends_on:
-      - postgres
-      - redis
-      - ed-database-management
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      POSTGRES_PORT: ${POSTGRES_PORT}
-      POSTGRES_SCHEME: ${POSTGRES_SCHEME}
-      db_user: ${POSTGRES_USER}
-      db_password: ${POSTGRES_PASSWORD}
-      db_host: ${POSTGRES_HOST}
-      db_name: ${POSTGRES_DB}
-      db_port: ${POSTGRES_PORT}
-      DEBUG: ${DEBUG}
-      ENVIRONMENT: ${ENVIRONMENT}
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
-      GCS_BUCKET: ${CURATED_BUCKET}
-      GOOGLE_APPLICATION_CREDENTIALS: /secrets/gcp-credentials.json
-      LABEL_STUDIO_BASE_URL: ${LABEL_STUDIO_BASE_URL}
-      LABEL_STUDIO_API_KEY: ${LABEL_STUDIO_API_KEY}
-      LABEL_STUDIO_WEBHOOK_SECRET: ${LABEL_STUDIO_WEBHOOK_SECRET}
-      LABEL_STUDIO_MEDIA_TOKEN: ${LABEL_STUDIO_MEDIA_TOKEN}
-      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
-    ports:
-      - "5011:5011"
-    volumes:
-      - ../ed-labeler-service:/app
-      - ./secrets/gcp-credentials.json:/secrets/gcp-credentials.json:ro
-    command: [
-      "uvicorn",
-      "app.main:app",
-      "--host", "0.0.0.0",
-      "--port", "5011",
-      "--reload",
-      "--reload-dir", "/app"
-    ]
-    networks:
-      - ed-platform
+  # ed-labeler-service:
+  #   build:
+  #     context: ../ed-labeler-service
+  #     dockerfile: Dockerfile
+  #     args:
+  #       PLATFORM_COMMON_TOKEN: ${PLATFORM_COMMON_TOKEN}
+  #   container_name: ed-labeler-service
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #     - ed-database-management
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_USER}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  #     POSTGRES_DB: ${POSTGRES_DB}
+  #     POSTGRES_HOST: ${POSTGRES_HOST}
+  #     POSTGRES_PORT: ${POSTGRES_PORT}
+  #     POSTGRES_SCHEME: ${POSTGRES_SCHEME}
+  #     db_user: ${POSTGRES_USER}
+  #     db_password: ${POSTGRES_PASSWORD}
+  #     db_host: ${POSTGRES_HOST}
+  #     db_name: ${POSTGRES_DB}
+  #     db_port: ${POSTGRES_PORT}
+  #     DEBUG: ${DEBUG}
+  #     ENVIRONMENT: ${ENVIRONMENT}
+  #     DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+  #     GCS_BUCKET: ${CURATED_BUCKET}
+  #     GOOGLE_APPLICATION_CREDENTIALS: /secrets/gcp-credentials.json
+  #     LABEL_STUDIO_BASE_URL: ${LABEL_STUDIO_BASE_URL}
+  #     LABEL_STUDIO_API_KEY: ${LABEL_STUDIO_API_KEY}
+  #     LABEL_STUDIO_WEBHOOK_SECRET: ${LABEL_STUDIO_WEBHOOK_SECRET}
+  #     LABEL_STUDIO_MEDIA_TOKEN: ${LABEL_STUDIO_MEDIA_TOKEN}
+  #     PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+  #   ports:
+  #     - "5011:5011"
+  #   volumes:
+  #     - ../ed-labeler-service:/app
+  #     - ./secrets/gcp-credentials.json:/secrets/gcp-credentials.json:ro
+  #   command: [
+  #     "uvicorn",
+  #     "app.main:app",
+  #     "--host", "0.0.0.0",
+  #     "--port", "5011",
+  #     "--reload",
+  #     "--reload-dir", "/app"
+  #   ]
+  #   networks:
+  #     - ed-platform
 
   ed-video-processing-service:
     build:
