@@ -375,7 +375,6 @@ services:
       DEBUG: ${DEBUG}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
-      openai_api_key: ${OPENAI_API_KEY}
     ports:
       - "5009:5009"
     volumes:
